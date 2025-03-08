@@ -8,32 +8,36 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 const NEWS_API_KEY = process.env.NEWS_API_KEY;
 
-//Stop the server if NEWS_API_KEY is missing
+// Stop the server if NEWS_API_KEY is missing
 if (!NEWS_API_KEY) {
     console.error("NEWS_API_KEY is missing! Set it in the environment variables.");
-    process.exit(1); 
+    process.exit(1);
 }
 
+// Enable CORS
 app.use(cors());
 
-//Serve frontend files, allowing `.html` and `.htm` extensions
+// Serve frontend files, allowing `.html` and `.htm` extensions
 app.use(express.static(path.join(__dirname, 'public'), {
     extensions: ['html', 'htm']
 }));
 
-
+// Serve index.html at `/`
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// News API endpoint
 app.get('/news', async (req, res) => {
     try {
         const category = req.query.category || 'general';
-        console.log(`🔍 Fetching news for category: ${category}`);
+        const page = req.query.page || 1;
+        console.log(`🔍 Fetching news for category: ${category}, page: ${page}`);
 
         const response = await axios.get('https://newsapi.org/v2/top-headlines', {
             params: {
-                category: category,
+                category,
+                // country: 'us', // Uncomment if you want US-specific news
                 apiKey: NEWS_API_KEY
             }
         });
@@ -53,11 +57,12 @@ app.get('/news', async (req, res) => {
     }
 });
 
+// Catch-all route to serve `index.html` for any unknown routes (SPA routing)
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-//Start the server
+// Start the server
 app.listen(PORT, () => {
     console.log(`🚀 Server running on ${
       process.env.NODE_ENV === 'production' 
